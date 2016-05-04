@@ -10,7 +10,7 @@ import sys
 import multiprocessing
 
 TEST_SCRIPT_NAME = "run_tests.py"
-IN_TESTED_DIR_NEEDS = ["Test_Suite", TEST_SCRIPT_NAME, "project_cli.py"]
+IN_TESTED_DIR_NEEDS = ["Test_Suite", TEST_SCRIPT_NAME, "run_single_test.py"]
 REPO_SUFFIX = "database"
 BASE_REPO_NAME = "instructor-database"
 GITHUB_ORG = "CSE480-MSU"
@@ -111,7 +111,7 @@ def tag_repos(students, repo_dir, tag_name):
         
 def send_email(subject_line, csv_file):
     def send_single_email(address, subject_line, body):
-        command = ['mailx', '-s', subject_line, address]
+        command = ['mutt', '-e', '""set from=do-not-reply@cse.msu.edu""', '-s', subject_line, "--", address]
         with subprocess.Popen(command, stdin=subprocess.PIPE, universal_newlines=True) as proc:
             proc.communicate(body)
 
@@ -360,7 +360,7 @@ def convert_to_D2L(csv_file, assignment_name):
         return rows
     rows = get_rows(csv_file)
     header = ("Username", assignment_name + " Points Grade", "End-of-Line Indicator")
-    with open("D2L.csv".format(assignment_name), 'w') as csv_handle:
+    with open("{}_D2L.csv".format(assignment_name), 'w') as csv_handle:
         writer = csv.writer(csv_handle)
         writer.writerow(header)
         writer.writerows(rows)
