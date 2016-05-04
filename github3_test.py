@@ -1,17 +1,21 @@
 from os import path
-
+import re
 from github3 import login
 
 with open(path.expanduser("~/.github_token"), "r") as handle:
     token = handle.read().strip()
 
-#g = Github(token)
-#o = g.get_organization("ZOOL851-MSU")
-#print([repo.name for repo in o.get_repos()])
-
 gh = login(token=token)
-org = gh.organization("ZOOL851-MSU")
+org = gh.organization("CSE450-MSU")
 
-teams = list(org.teams())
-for team in teams:
-    print(team.as_dict())
+
+repos = list(org.repositories())
+for repo in repos:
+    #print(repo)
+    att = repo.as_dict()
+    name = att["name"]
+    if re.search("\-tube", name):
+        repo.delete()
+    
+
+
