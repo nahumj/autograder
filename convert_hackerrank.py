@@ -1,16 +1,30 @@
 #!/usr/bin/env python3
+"""
+This is a short script to convert the csv test results that
+HackerRank provides to a form that the autograder can process
+(same format as grading a GitHub project).
+"""
 import csv
 import argparse
 
-def convert_hackerrank_to_autograder(input_file, output_file, number_of_questions):
-        
-    reader = csv.DictReader(open(input_file, 'r'))
-    questions = ["Question {}".format(i) for i in range(1, number_of_questions + 1)]
-    fieldnames = ["MSU_Net_ID", "GitHub_Username", "Full_Name", "Commit", "Late_Penalty","grade"]
+
+def convert_hackerrank_to_autograder(
+        input_filename, output_filename, number_of_questions):
+    """
+    Takes the given input_filename (from HackerRank),
+    output_filename (supplied by caller),
+    and the number of questions in the 'test'.
+    """
+    reader = csv.DictReader(open(input_filename, 'r'))
+    questions = ["Question {}".format(i)
+                 for i in range(1, number_of_questions + 1)]
+    fieldnames = ["MSU_Net_ID", "GitHub_Username",
+                  "Full_Name", "Commit",
+                  "Late_Penalty", "grade"]
     fieldnames += questions
-    writer = csv.DictWriter(open(output_file, 'w'), fieldnames=fieldnames)
+    writer = csv.DictWriter(open(output_filename, 'w'), fieldnames=fieldnames)
     writer.writeheader()
-    
+
     for row in reader:
         new_row = {}
         new_row["MSU_Net_ID"] = row["Login ID"].split('@')[0]
@@ -26,12 +40,12 @@ def convert_hackerrank_to_autograder(input_file, output_file, number_of_question
         grade /= 10.0
         new_row["grade"] = str(grade)
         writer.writerow(new_row)
-            
-    
-    
 
 
 def main():
+    """
+    Main function that parses the arguments and calls the convert function.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('input_file')
     parser.add_argument('output_file')
