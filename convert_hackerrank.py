@@ -46,7 +46,10 @@ def main():
     """
     Main function that parses the arguments and calls the convert function.
     """
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="""
+    This is a short script to convert the csv test results that
+    HackerRank provides to a form that the autograder can process
+    (same format as grading a GitHub project).""")
     parser.add_argument('input_file')
     parser.add_argument('output_file')
     parser.add_argument('number_of_questions')
