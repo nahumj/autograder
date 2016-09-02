@@ -25,7 +25,7 @@ def convert_class_list(
         comma_name = input_row["Student_Name"]
         last_name, comma, first_name = comma_name.partition(", ")
         name = first_name + " " + last_name
-        
+
         hackerrank_row = {"Email":email, "Name":name}
         student_row = {"msu_net_id":input_row["MSUNet_ID"], "full_name":name}
 
@@ -39,8 +39,8 @@ def main():
     Main function that parses the arguments and calls the convert function.
     """
     parser = argparse.ArgumentParser(description="""
-    Converts the class list provided by MSU's Office of the Registrar to a format
-    that HackerRank can use to invite candidates.
+    Converts the class list provided by MSU's Office of the Registrar
+    to a format that HackerRank can use to invite candidates.
     """)
     parser.add_argument('class_list_filename')
     parser.add_argument('hackerrank_candidate_list_filename')
