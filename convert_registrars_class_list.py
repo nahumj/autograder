@@ -9,30 +9,36 @@ import argparse
 
 def convert_class_list(
         class_list_filename,
-        hackerrank_candidate_list_filename,
-        student_info_filename):
+        hackerrank_candidate_list_filename):
     reader = csv.DictReader(open(class_list_filename, 'r'))
     hackerrank_fieldnames = ["Email", "Name"]
-    student_fieldnames = ["github_username", "msu_net_id", "full_name"]
     hackerrank_writer = csv.DictWriter(
         open(hackerrank_candidate_list_filename, 'w'), hackerrank_fieldnames)
-    student_writer = csv.DictWriter(
-        open(student_info_filename, 'w'), student_fieldnames)
+
     hackerrank_writer.writeheader()
-    student_writer.writeheader()
     for input_row in reader:
         email = input_row["MSUNet_ID"] + "@msu.edu"
         comma_name = input_row["Student_Name"]
         last_name, comma, first_name = comma_name.partition(", ")
         name = first_name + " " + last_name
-
         hackerrank_row = {"Email":email, "Name":name}
-        student_row = {"msu_net_id":input_row["MSUNet_ID"], "full_name":name}
-
         hackerrank_writer.writerow(hackerrank_row)
-        student_writer.writerow(student_row)
 
-
+def convert_to_lab_list(class_list_filename, lab_list_filename):
+    reader = csv.DictReader(open(class_list_filename, 'r'))
+    fieldnames = ["Username", "Assignment Points Grade", "First_Names", "Last_Name", "End-of-Line Indicator"]
+    writer = csv.DictWriter(
+        open(lab_list_filename, 'w'), fieldnames)
+    writer.writeheader()
+    for input_row in reader:
+        row = {}
+        row["Username"] = input_row["MSUNet_ID"]
+        comma_name = input_row["Student_Name"]
+        last_name, comma, first_name = comma_name.partition(", ")
+        row["First_Names"] = first_name
+        row["Last_Name"] = last_name
+        row["End-of-Line Indicator"] = '#'
+        writer.writerow(row)
 
 def main():
     """
@@ -44,12 +50,11 @@ def main():
     """)
     parser.add_argument('class_list_filename')
     parser.add_argument('hackerrank_candidate_list_filename')
-    parser.add_argument('student_info_filename')
 
     args = parser.parse_args()
     convert_class_list(args.class_list_filename,
-        args.hackerrank_candidate_list_filename,
-        args.student_info_filename)
+        args.hackerrank_candidate_list_filename)
 
+    #convert_to_lab_list(args.class_list_filename, "cse220_lab.csv")
 if __name__ == "__main__":
     main()
