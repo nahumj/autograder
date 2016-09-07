@@ -15,9 +15,9 @@ import multiprocessing
 
 TEST_SCRIPT_NAME = "run_tests.py"
 IN_TESTED_DIR_NEEDS = ["Test_Suite", TEST_SCRIPT_NAME, "run_single_test.py"]
-REPO_SUFFIX = "database"
-BASE_REPO_NAME = "instructor-database"
-GITHUB_ORG = "CSE480-MSU"
+REPO_SUFFIX = "repo"
+BASE_REPO_NAME = "tube-main"
+GITHUB_ORG = "CSE450-MSU"
 LATE_DAY_PENALTY = 1.0
 NUM_POOL_WORKERS = 20
 
@@ -497,7 +497,7 @@ Desire2Learn can import.
 
     command = subparsers.add_parser("command",
                                     help="""Run command on every repo.""")
-    command.add_argument('command')
+    command.add_argument('given_command')
 
     return parser.parse_args()
 
@@ -529,7 +529,7 @@ def main():
     elif args.command == "command":
         run_arbitary_command_on_repos(students,
                                       args.student_repos,
-                                      args.command)
+                                      args.given_command)
     else:
         print("command not found")
         exit(1)
