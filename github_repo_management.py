@@ -31,6 +31,7 @@ def create_student_repos(org, usernames):
             new_repo_names.remove(repo.name)
     print(new_repo_names)
     for new_repo_name in new_repo_names:
+        print("Creating:" + new_repo_name)
         org.create_repo(new_repo_name,
             private=True, has_issues=False, has_wiki=False)
 

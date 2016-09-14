@@ -24,21 +24,7 @@ def convert_class_list(
         hackerrank_row = {"Email":email, "Name":name}
         hackerrank_writer.writerow(hackerrank_row)
 
-def convert_to_lab_list(class_list_filename, lab_list_filename):
-    reader = csv.DictReader(open(class_list_filename, 'r'))
-    fieldnames = ["Username", "Assignment Points Grade", "First_Names", "Last_Name", "End-of-Line Indicator"]
-    writer = csv.DictWriter(
-        open(lab_list_filename, 'w'), fieldnames)
-    writer.writeheader()
-    for input_row in reader:
-        row = {}
-        row["Username"] = input_row["MSUNet_ID"]
-        comma_name = input_row["Student_Name"]
-        last_name, comma, first_name = comma_name.partition(", ")
-        row["First_Names"] = first_name
-        row["Last_Name"] = last_name
-        row["End-of-Line Indicator"] = '#'
-        writer.writerow(row)
+
 
 def main():
     """
@@ -55,6 +41,5 @@ def main():
     convert_class_list(args.class_list_filename,
         args.hackerrank_candidate_list_filename)
 
-    #convert_to_lab_list(args.class_list_filename, "cse220_lab.csv")
 if __name__ == "__main__":
     main()

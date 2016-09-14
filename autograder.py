@@ -14,13 +14,13 @@ import sys
 import multiprocessing
 
 TEST_SCRIPT_NAME = "run_tests.py"
-IN_TESTED_DIR_NEEDS = ["Test_Suite", TEST_SCRIPT_NAME, "run_single_test.py"]
+IN_TESTED_DIR_NEEDS = ["Test_Suite", TEST_SCRIPT_NAME, "run_single_test.py", "../ReferenceCode"]
 REPO_SUFFIX = "repo"
 BASE_REPO_NAME = "tube-main"
 GITHUB_ORG = "CSE450-MSU"
 LATE_DAY_PENALTY = 1.0
 NUM_POOL_WORKERS = 20
-
+MULTI_ALLOWED = True
 Student = collections.namedtuple('Student',
                                  ['github_username',
                                   'msu_net_id',
@@ -178,7 +178,8 @@ Raw Data (consult run_tests.py for details)
         send_email_to_student(student, subject_line)
     send_single_email("nahumjos@msu.edu",
                       "Grades Sent: " + subject_line,
-                      "Hurray!\n{}".format(students_data_list))
+                      "Number Sent: {}\nHurray!\n{}".format(
+                      len(students_data_list), students_data_list))
 
 
 def get_late_grade(data_list):
@@ -298,10 +299,14 @@ def grade_repos(students, repos_dir, base_repo_dir,
 
     def get_student_scores():
         pool = multiprocessing.Pool(NUM_POOL_WORKERS)
+
         args = [(student, repos_dir, grade_directory, base_repo_path)
                 for student in students]
-        list_of_student_repo_results = list(
-            pool.map(get_test_results, args))
+        if MULTI_ALLOWED:
+            list_of_student_repo_results = list(
+                pool.map(get_test_results, args))
+        else:
+            list_of_student_repo_results = [get_test_results(arg) for arg in args]
         check_all_tests_run(list_of_student_repo_results)
         return list_of_student_repo_results
 
