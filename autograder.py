@@ -244,7 +244,7 @@ def copy_test_files(student_repo, grade_directory, base_repo_path):
                                     stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as cpe:
             pass
-        subprocess.check_output(['cp', '-r', source, dest])
+        subprocess.check_output(['cp', '-rf', source, dest])
 
 
 def get_test_results(arg):
