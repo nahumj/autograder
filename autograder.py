@@ -21,6 +21,7 @@ GITHUB_ORG = "CSE450-MSU"
 LATE_DAY_PENALTY = 1.0
 NUM_POOL_WORKERS = 20
 MULTI_ALLOWED = True
+INSTRUCTOR_EMAIL = "nahumjos@cse.msu.edu"
 Student = collections.namedtuple('Student',
                                  ['github_username',
                                   'msu_net_id',
@@ -176,7 +177,7 @@ Raw Data (consult run_tests.py for details)
     students_data_list = get_students_data_list(csv_file)
     for student in students_data_list:
         send_email_to_student(student, subject_line)
-    send_single_email("nahumjos@msu.edu",
+    send_single_email(INSTRUCTOR_EMAIL,
                       "Grades Sent: " + subject_line,
                       "Number Sent: {}\nHurray!\n{}".format(
                       len(students_data_list), students_data_list))
