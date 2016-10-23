@@ -14,7 +14,8 @@ import sys
 import multiprocessing
 
 TEST_SCRIPT_NAME = "run_tests.py"
-IN_TESTED_DIR_NEEDS = ["Test_Suite", TEST_SCRIPT_NAME, "run_single_test.py", "../ReferenceCode"]
+IN_TESTED_DIR_NEEDS = ["Test_Suite", TEST_SCRIPT_NAME,
+                       "run_single_test.py", "../ReferenceCode"]
 REPO_SUFFIX = "repo"
 BASE_REPO_NAME = "tube-main"
 GITHUB_ORG = "CSE450-MSU"
@@ -22,6 +23,8 @@ LATE_DAY_PENALTY = 1.0
 NUM_POOL_WORKERS = 20
 MULTI_ALLOWED = True
 INSTRUCTOR_EMAIL = "nahumjos@cse.msu.edu"
+PULL_CHANGES_FOR_BASE_REPO = False
+
 Student = collections.namedtuple('Student',
                                  ['github_username',
                                   'msu_net_id',
@@ -180,7 +183,7 @@ Raw Data (consult run_tests.py for details)
     send_single_email(INSTRUCTOR_EMAIL,
                       "Grades Sent: " + subject_line,
                       "Number Sent: {}\nHurray!\n{}".format(
-                      len(students_data_list), students_data_list))
+                        len(students_data_list), students_data_list))
 
 
 def get_late_grade(data_list):
@@ -282,11 +285,12 @@ def grade_repos(students, repos_dir, base_repo_dir,
                 grade_directory, tag_name, late_penalty):
     all_readme_file = "all_readmes.txt"
     base_repo_path = os.path.join(base_repo_dir, BASE_REPO_NAME)
-    print("pulling changes to base repository")
-    subprocess.check_output(['git', 'pull', 'origin', 'master'],
-                            cwd=base_repo_path)
-    subprocess.check_output(['git', 'checkout', '-f', 'origin/master'],
-                            cwd=base_repo_path)
+    if PULL_CHANGES_FOR_BASE_REPO:
+        print("pulling changes to base repository")
+        subprocess.check_output(['git', 'pull', 'origin', 'master'],
+                                cwd=base_repo_path)
+        subprocess.check_output(['git', 'checkout', '-f', 'origin/master'],
+                                cwd=base_repo_path)
 
     def check_all_tests_run(list_of_student_repo_results):
         all_tests = []
