@@ -9,10 +9,10 @@ from github3 import login
 import csv
 import argparse
 
-TEAM_SUFFIX = "-team"
-REPO_SUFFIX = "-repo"
-ORGANIZATION_NAME = "CSE450-MSU"
-INSTRUCTOR_BASE_REPO = "tube-main"
+REPO_SUFFIX = "-database"
+ORGANIZATION_NAME = "CSE480-MSU"
+INSTRUCTOR_BASE_REPO = "instructor-database"
+
 
 def get_org(org_name):
     with open(path.expanduser("~/.github_token"), "r") as handle:
@@ -22,10 +22,9 @@ def get_org(org_name):
     return gh.organization(org_name)
 
 
-
-def create_student_repos(org, usernames):
+def create_student_repos(org, rows):
     print("Creating Repos")
-    new_repo_names = {username + REPO_SUFFIX for username in usernames}
+    new_repo_names = {row["msu_net_id"] + REPO_SUFFIX for row in rows}
     for repo in org.iter_repos():
         if repo.name in new_repo_names:
             new_repo_names.remove(repo.name)
@@ -33,21 +32,27 @@ def create_student_repos(org, usernames):
     for new_repo_name in new_repo_names:
         print("Creating:" + new_repo_name)
         org.create_repo(new_repo_name,
-            private=True, has_issues=False, has_wiki=False)
+                        private=True,
+                        has_issues=False,
+                        has_wiki=False)
 
 
-def create_student_teams(org, usernames):
+def create_student_teams(org, rows):
     print("Creating Teams")
-    new_team_names = {username + TEAM_SUFFIX for username in usernames}
+    print(rows)
+    team_name_to_github = {
+            row["msu_net_id"]: row["github_username"]
+            for row in rows}
     for team in org.iter_teams():
-        if team.name in new_team_names:
-            new_team_names.remove(team.name)
-    print(new_team_names)
-    for new_team_name in new_team_names:
-        team = org.create_team(new_team_name, permission="push")
-        new_username = new_team_name[:-len(TEAM_SUFFIX)]
-        team.invite(new_username)
-        team.add_repo(ORGANIZATION_NAME + "/" + new_username + REPO_SUFFIX)
+        if team.name in team_name_to_github:
+            del team_name_to_github[team.name]
+    print(team_name_to_github)
+    for team_name in team_name_to_github:
+        team = org.create_team(team_name, permission="push")
+        github_username = team_name_to_github[team_name]
+        team.invite(github_username)
+        team.add_repo(ORGANIZATION_NAME + "/" + team_name + REPO_SUFFIX)
+
 
 def create_or_add_to_all_student_team(org, rows):
     """
@@ -70,24 +75,31 @@ def create_or_add_to_all_student_team(org, rows):
             base_repo = repo
             break
     else:
-        print("Need to manually create instructor base repo named:" + INSTRUCTOR_BASE_REPO)
+        print("Need to manually create instructor base repo named:")
+        print(INSTRUCTOR_BASE_REPO)
     all_students_team.add_repo(base_repo)
     return bad_rows
 
-def delete_repos_and_teams(org):
+
+def delete_repos_and_teams(org, except_list=None):
     print("Deleting")
+    if except_list is None:
+        except_list = set()
     for repo in org.iter_repos():
         if REPO_SUFFIX in repo.name:
-            repo.delete()
+            if repo.name not in except_list:
+                repo.delete()
     for team in org.iter_teams():
-        if TEAM_SUFFIX in team.name:
+        if team.name not in except_list:
             team.delete()
+
 
 def print_repos_and_teams(org):
     for team in org.iter_teams():
         print("TEAM: {}".format(team.name))
     for repo in org.iter_repos():
         print("REPO: {}".format(repo.name))
+
 
 def add_instructors_to_every_repo(org):
     for team in org.iter_teams():
@@ -99,6 +111,7 @@ def add_instructors_to_every_repo(org):
     for repo in org.iter_repos():
         instructor_team.add_repo(repo)
     instructor_team.edit(instructor_team.name, permission="admin")
+
 
 def load_github_usernames(student_info_csv):
     reader = csv.DictReader(open(student_info_csv, 'r'))
@@ -124,9 +137,24 @@ def main():
         print(row)
     print("Done with Bad Usernames")
     good_usernames = all_usernames - bad_usernnames
-    create_student_repos(org, good_usernames)
-    create_student_teams(org, good_usernames)
+    good_rows = [row for row in rows
+                 if row["github_username"] in good_usernames]
+    print("Good Rows")
+    print(good_rows)
+    create_student_repos(org, good_rows)
+    create_student_teams(org, good_rows)
     add_instructors_to_every_repo(org)
+    print_repos_and_teams(org)
+
+
+def delete_main():
+    print("Deleting")
+    org = get_org(ORGANIZATION_NAME)
+    delete_repos_and_teams(
+        org, except_list={"cse480_website", "instructor-database",
+                          "instructor-database-2016",
+                          "cse480_instructor_only",
+                          "Instructors"})
     print_repos_and_teams(org)
 
 

@@ -21,9 +21,8 @@ def convert_class_list(
         comma_name = input_row["Student_Name"]
         last_name, comma, first_name = comma_name.partition(", ")
         name = first_name + " " + last_name
-        hackerrank_row = {"Email":email, "Name":name}
+        hackerrank_row = {"Email": email, "Name": name}
         hackerrank_writer.writerow(hackerrank_row)
-
 
 
 def main():
@@ -39,7 +38,7 @@ def main():
 
     args = parser.parse_args()
     convert_class_list(args.class_list_filename,
-        args.hackerrank_candidate_list_filename)
+                       args.hackerrank_candidate_list_filename)
 
 if __name__ == "__main__":
     main()

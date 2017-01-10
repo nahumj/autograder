@@ -16,9 +16,9 @@ import multiprocessing
 TEST_SCRIPT_NAME = "run_tests.py"
 IN_TESTED_DIR_NEEDS = ["Test_Suite", TEST_SCRIPT_NAME,
                        "run_single_test.py", "../ReferenceCode"]
-REPO_SUFFIX = "repo"
-BASE_REPO_NAME = "tube-main"
-GITHUB_ORG = "CSE450-MSU"
+REPO_SUFFIX = "database"
+BASE_REPO_NAME = "instructor-database"
+GITHUB_ORG = "CSE480-MSU"
 LATE_DAY_PENALTY = 1.0
 NUM_POOL_WORKERS = 20
 MULTI_ALLOWED = True
@@ -218,7 +218,7 @@ def convert_student_to_clone_url(student):
 
 
 def get_repo_name(student):
-    return "{}-{}".format(student.github_username, REPO_SUFFIX)
+    return "{}-{}".format(student.msu_net_id, REPO_SUFFIX)
 
 
 StudentRepoResults = collections.namedtuple(

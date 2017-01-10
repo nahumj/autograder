@@ -23,10 +23,13 @@ def convert_form_to_student_info(
         full_name = input_row["First name"] + " " + input_row["Last name"]
         github_username = input_row["GitHub Username"]
 
-        row = {"github_username":github_username, "msu_net_id":msu_net_id, "full_name":full_name}
+        row = {"github_username": github_username,
+               "msu_net_id": msu_net_id,
+               "full_name": full_name}
         msu_net_id_to_row[msu_net_id] = row
     for row in msu_net_id_to_row.values():
         writer.writerow(row)
+
 
 def main():
     """
@@ -40,7 +43,7 @@ def main():
 
     args = parser.parse_args()
     convert_form_to_student_info(args.form_csv,
-        args.student_info_csv)
+                                 args.student_info_csv)
 
 if __name__ == "__main__":
     main()
