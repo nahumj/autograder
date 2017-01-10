@@ -39,14 +39,12 @@ def create_student_repos(org, rows):
 
 def create_student_teams(org, rows):
     print("Creating Teams")
-    print(rows)
     team_name_to_github = {
             row["msu_net_id"]: row["github_username"]
             for row in rows}
     for team in org.iter_teams():
         if team.name in team_name_to_github:
             del team_name_to_github[team.name]
-    print(team_name_to_github)
     for team_name in team_name_to_github:
         team = org.create_team(team_name, permission="push")
         github_username = team_name_to_github[team_name]
