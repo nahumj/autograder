@@ -15,7 +15,7 @@ import multiprocessing
 
 TEST_SCRIPT_NAME = "run_tests.py"
 IN_TESTED_DIR_NEEDS = ["Test_Suite", TEST_SCRIPT_NAME,
-                       "run_single_test.py", "../ReferenceCode"]
+                       "run_single_test.py", "cli.py"]
 REPO_SUFFIX = "database"
 BASE_REPO_NAME = "instructor-database"
 GITHUB_ORG = "CSE480-MSU"
