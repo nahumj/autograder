@@ -6,54 +6,45 @@ calling run_single_test.py and collecting the information
 returned.
 """
 
-import subprocess
-from subprocess import call, check_call, check_output
-import os.path
-from os.path import exists, join
-import functools
-import os
-import glob
-import fnmatch
-import sys
-import itertools
-import re
 import argparse
 import contextlib
 import collections
 import difflib
-
+import fnmatch
+import functools
+import glob
+import itertools
+import os
+import subprocess
+import sys
 
 # These global variables are unlikely to need to change
 PROJECT_EXECUTABLE = "run_single_test.py"
 TEST_SUITE_FOLDER = "Test_Suite"
 TEST_FILES_TO_POINTS = collections.OrderedDict()
-POINTS_FILENAME = "points.txt"
-with open(join(TEST_SUITE_FOLDER, POINTS_FILENAME), 'r') as file_handle:
-    for line in file_handle:
-        category, point_str = line.split()
-        point_value = float(point_str)
-        category_path = join(TEST_SUITE_FOLDER, category)
-        TEST_FILES_TO_POINTS[category_path] = point_value
 EXTRA_CREDIT_TEST_FILES_TO_POINTS = collections.OrderedDict([
     ("Test_Suite/extra.*", 1)
 ])
+POINTS_FOR_PASSING_ALL = 1
+POINTS_FILENAME = os.path.join(TEST_SUITE_FOLDER, "points.txt")
+with open(POINTS_FILENAME, 'r') as file_handle:
+    for line in file_handle:
+        category, point_str = line.split()
+        point_value = float(point_str)
 
+        category_path = os.path.join(TEST_SUITE_FOLDER, category)
+        TEST_FILES_TO_POINTS[category_path] = point_value
+
+NEEDED_FILES_FILENAME = os.path.join(TEST_SUITE_FOLDER, "needed_files.txt")
+with open(NEEDED_FILES_FILENAME, 'r') as file_handle:
+    NEEDED_FILES = [line.strip() for line in file_handle]
 
 # These Global Variables may need to be changed depending on the project
-
-# Pre-test files that should exist in the project.
-NEEDED_FILES = ["README.txt", "tube.py", "example.tube"]
-# Number of points having the above files should be rewarded
 NEEDED_FILES_POINTS = 0.5
 
 # Number of seconds to let each test run before calling it a fail.
 # Make sure this is strictly larger than the timeout in run_single_test.py.
-TEST_TIMEOUT = 3
-
-# Temporary student project output file
-TEMP_PROJECT_FILENAME = "project_output.txt"
-# Temporary correct output file
-TEMP_CORRECT_FILENAME = "correct_output.txt"
+TEST_TIMEOUT = 20
 
 # Struc that holds per test result
 TestOutcome = collections.namedtuple('TestOutcome',
@@ -81,11 +72,19 @@ class TestPassed(TestResult):
     pass
 
 
+class NoMatchingTestsFound(Exception):
+    """
+    This class is used to indicate no matching tests found.
+    """
+    pass
+
+
 class InternalTestSuiteException(Exception):
     """
     This class is used to indicate a failure of
     the testing apparatus (not the student's code).
     """
+
     def __init__(self, message):
         super(InternalTestSuiteException, self).__init__(message)
         long_message = """
@@ -102,9 +101,6 @@ def calculate_grade(outcomes, print_output=True):
     Takes an iterable of TestOutcomes and returns the points
     (and extra credit points) awarded. It also can print the tests outcomes.
     """
-
-    class NoMatchingTestsFound(Exception):
-        pass
 
     def grade_category(file_token, test_to_passed, weight, proportional=False):
         """
@@ -153,23 +149,25 @@ def calculate_grade(outcomes, print_output=True):
         """
         output = []
         total = 0.0
+        total_weight = 0.0
         for test_type, weight in category_to_weight.items():
             try:
                 partial_output, partial_score = grade_category(
-                    test_type, test_to_passed, weight=weight)
+                    test_type, test_to_passed,
+                    weight=weight, proportional=True)
                 output += partial_output
                 total += partial_score
+                total_weight += weight
             except NoMatchingTestsFound:
                 pass
-
-        return output, total
+        return output, total, total_weight
 
     def get_needed_files_score(test_to_passed):
         criteria_name = "Pre-test checks for needed files: "
-        needed_file_score = 0
+        needed_file_score = 0.0
         if test_to_passed["has_needed_files"]:
             needed_file_score = NEEDED_FILES_POINTS
-        output = [criteria_name + "{0} of {0} points".format(
+        output = [criteria_name + "{0} of {1} points".format(
             needed_file_score, NEEDED_FILES_POINTS)]
         return output, needed_file_score
 
@@ -181,34 +179,35 @@ def calculate_grade(outcomes, print_output=True):
     output += needed_output
     total += needed_score
 
-    test_output, test_score = get_output_score(
+    test_output, test_score, total_weight = get_output_score(
         test_to_passed, TEST_FILES_TO_POINTS)
+
+    if test_score == total_weight:
+        points_for_passing_all_awarded = POINTS_FOR_PASSING_ALL
+    else:
+        points_for_passing_all_awarded = 0
+    test_output.append(
+        "Points for passing every test is: "
+        "{} of {} points awarded.".format(
+                points_for_passing_all_awarded, POINTS_FOR_PASSING_ALL))
+    total += points_for_passing_all_awarded
+
     output += test_output
     total += test_score
 
-    extra_output, extra_score = get_output_score(
+    extra_output, extra_score, extra_weight = get_output_score(
         test_to_passed, EXTRA_CREDIT_TEST_FILES_TO_POINTS)
     if extra_output:
         output += ["", "Extra credit (not actually worth points):"]
-        output += output_extra + [""]
+        output += extra_output + [""]
 
     if print_output:
         print("\n".join(output))
         possible_points = NEEDED_FILES_POINTS + sum(
-            TEST_FILES_TO_POINTS.values())
+            TEST_FILES_TO_POINTS.values()) + POINTS_FOR_PASSING_ALL
         print("Current tentative grade is: {:.1f} of {:.1f}".format(
             total, possible_points))
     return total, extra_score
-
-
-def rm(path):
-    """
-    Remove a file and squelch the file not found exception.
-    """
-    try:
-        os.remove(path)
-    except OSError:
-        pass
 
 
 def check_needed_files():
@@ -216,7 +215,7 @@ def check_needed_files():
     Raise appropiate TestResult for if the NEEDED_FILES are present.
     """
     for filename in NEEDED_FILES:
-        if not exists(filename):
+        if not os.path.exists(filename):
             raise TestFailed([
                 "Failed ('{}' file doesn't exist)".format(filename)])
     raise TestPassed(["Passed (has all required files)"])
@@ -229,8 +228,9 @@ def call_and_get_output(args, timeout=None):
     raise a TestFailed.
     """
     try:
-        output = check_output(args, stderr=subprocess.STDOUT,
-                              universal_newlines=True, timeout=timeout)
+        output = subprocess.check_output(args, stderr=subprocess.STDOUT,
+                                         universal_newlines=True,
+                                         timeout=timeout)
         returncode = 0
     except subprocess.CalledProcessError as cpe:
         output = cpe.output
@@ -241,7 +241,7 @@ def call_and_get_output(args, timeout=None):
         Command: {} took too long.
         Process took longer than {} seconds. Killing it.""".format(
             command_str, te.timeout),
-                  "Failed (execution took too long)"]
+            "Failed (execution took too long)"]
         raise TestFailed(output)
     except OSError as ose:
         output = ["Command: \"" + " ".join(args) + "\" raised OSError",
@@ -308,11 +308,11 @@ def run_test(test_file_path):
                                                tofile="Student Output",
                                                lineterm='\n'))
         if not diff_lines:
-            raise TestPassed(["Passed (correct output)"])
+            raise TestPassed(["Passed"])
         else:
             lines = ["Diff Output:"]
             lines.append("".join(diff_lines))
-            lines.append("Failed (wrong output)")
+            lines.append("Failed")
             raise TestFailed(lines)
 
     lines = ["Testing: " + test_file_path]
@@ -358,7 +358,7 @@ def print_first_failure(outcomes):
     """
     try:
         first_failure = next(itertools.dropwhile(
-                lambda outcome: outcome.passed, outcomes))
+            lambda outcome: outcome.passed, outcomes))
     except StopIteration as si:
         print("No Failures To Display!")
     else:
@@ -376,21 +376,6 @@ def run_tests(test_globs_to_points):
         outcome = TestOutcome(test_file_path, passed, output)
         outcomes.append(outcome)
     return outcomes
-
-
-def get_cmd_args():
-    parser = argparse.ArgumentParser(description="""
-    Runs the tests for the project.
-    By default it tests all files (indicated by the points.txt file)
-    in the Test_Suite and shows detailed output for the first failure.
-    """)
-    parser.add_argument('--run-machine-mode', action="store_true", help="""
-    Outputs the test result as 1's and 0's. For instructor use only.
-    """)
-    parser.add_argument('--extra', action="store_true", help="""
-    Runs the extra credit tests and reports their results as well.
-    """)
-    return parser.parse_args()
 
 
 def get_all_outcomes(tests, extra=None):
@@ -426,6 +411,27 @@ def try_to_outcome_wrapper(test_name, func):
     return wrapper
 
 
+def check_for_uncommitted_work():
+    """
+    Runs a simple check for unstaged and uncommitted files.
+    """
+    unstaged_command = ["git", "diff", "--no-patch", "--exit-code"]
+    uncommitted_command = ["git", "diff",
+                           "--no-patch", "--staged", "--exit-code"]
+    try:
+        subprocess.check_call(unstaged_command)
+        subprocess.check_call(uncommitted_command)
+    except subprocess.CalledProcessError as cpe:
+        print("Warning: You have uncommitted work. Run 'git status' for info.")
+    unmerged_commits_command = ["git", "rev-list",
+                                "master...origin/master", "--count"]
+    output = subprocess.check_output(unmerged_commits_command)
+    if int(output.strip()) != 0:
+        print("Your current master branch doesn't match the "
+              "origin/master branch.\n"
+              "Be sure to use 'git push'.")
+
+
 def machine_mode():
     """
     This function is called when --run-machine-mode is specified.
@@ -451,10 +457,11 @@ def normal_mode(args):
     Default function that runs the tests and pretty outputs the test results,
     the grade, and the details regarding the first failure.
     """
+    # check_for_uncommitted_work()
     print("Starting Tests")
     sys.stdout.flush()
 
-    if args.extra:
+    if args['extra']:
         outcomes = get_all_outcomes(
             TEST_FILES_TO_POINTS,
             EXTRA_CREDIT_TEST_FILES_TO_POINTS)
@@ -462,7 +469,7 @@ def normal_mode(args):
         outcomes = get_all_outcomes(TEST_FILES_TO_POINTS)
 
     def passed_all_tests(outcomes):
-        return all(map(lambda outcome: outcome.passed, outcomes))
+        return all(outcome.passed for outcome in outcomes)
 
     for outcome in outcomes:
         output = "{:<40} {}".format(outcome.file, outcome.output[-1])
@@ -482,15 +489,26 @@ def normal_mode(args):
         exit(1)
 
 
-def main():
+if __name__ == "__main__":
     """
-    Main function that runs the tests and chooses output mode.
+    Runs the tests and chooses output mode.
     """
-    args = get_cmd_args()
-    if args.run_machine_mode:
+
+    parser = argparse.ArgumentParser(description="""
+    Runs the tests for the project.
+    By default it tests all files (indicated by the points.txt file)
+    in the Test_Suite and shows detailed output for the first failure.
+    """)
+    parser.add_argument('--run-machine-mode', action="store_true", help="""
+    Outputs the test result as 1's and 0's. For instructor use only.
+    """)
+    parser.add_argument('--extra', action="store_true", help="""
+    Runs the extra credit tests and reports their results as well.
+    """)
+
+    args = vars(parser.parse_args())
+
+    if args['run_machine_mode']:
         machine_mode()
     else:
         normal_mode(args)
-
-if __name__ == "__main__":
-    main()
