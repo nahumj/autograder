@@ -137,7 +137,7 @@ def tag_repos(students, repo_dir, tag_name):
 
 
 def send_email(subject_line, csv_file):
-    def send_single_email(address, subject_line, body):
+    def send_single_email(address, subject_line, body, attachment=None):
         command = ['mutt',
                    '-e',
                    '""set from=do-not-reply@cse.msu.edu""',
@@ -145,6 +145,8 @@ def send_email(subject_line, csv_file):
                    subject_line,
                    "--",
                    address]
+        if attachment is not None:
+            command += ["-a", attachment]
         with subprocess.Popen(command,
                               stdin=subprocess.PIPE,
                               universal_newlines=True) as proc:
@@ -182,8 +184,9 @@ Raw Data (consult run_tests.py for details)
         send_email_to_student(student, subject_line)
     send_single_email(INSTRUCTOR_EMAIL,
                       "Grades Sent: " + subject_line,
-                      "Number Sent: {}\nHurray!\n{}".format(
-                        len(students_data_list), students_data_list))
+                      "Number Sent: {}".format(
+                        len(students_data_list)),
+                      attachment=csv_file)
 
 
 def get_late_grade(data_list):
@@ -311,7 +314,8 @@ def grade_repos(students, repos_dir, base_repo_dir,
             list_of_student_repo_results = list(
                 pool.map(get_test_results, args))
         else:
-            list_of_student_repo_results = [get_test_results(arg) for arg in args]
+            list_of_student_repo_results = [get_test_results(arg)
+                                            for arg in args]
         check_all_tests_run(list_of_student_repo_results)
         return list_of_student_repo_results
 
