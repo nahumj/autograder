@@ -142,11 +142,11 @@ def send_email(subject_line, csv_file):
                    '-e',
                    '""set from=do-not-reply@cse.msu.edu""',
                    '-s',
-                   subject_line,
-                   "--",
-                   address]
+                   subject_line]
         if attachment is not None:
             command += ["-a", attachment]
+        command += ["--", address]
+
         with subprocess.Popen(command,
                               stdin=subprocess.PIPE,
                               universal_newlines=True) as proc:
