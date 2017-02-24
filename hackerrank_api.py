@@ -1,7 +1,8 @@
 import requests
 import os.path
+from pprint import pprint
 
-
+output_filename = "output.html"
 
 with open(os.path.expanduser("~/.hackerrank_token")) as ht:
     token = ht.read().strip()
@@ -12,20 +13,35 @@ payload = {'access_token': token}
 r = requests.get(base_url + test_url, params=payload)
 response = r.json()
 tests = response['data']
-id_names = [(test["id"], test["name"]) for test in tests]
+id_names = {test["name"]: test["id"] for test in tests}
+print(id_names)
+test_name = "CSE480 Homework #6"
+test_id = id_names[test_name]
 
-example_id = 122432
-
-test_results_url = "/tests/" + str(example_id) + "/candidates/"
+test_results_url = "/tests/" + str(test_id) + "/candidates/"
 payload = {'access_token': token}
 r = requests.get(base_url + test_results_url, params=payload)
 response = r.json()
 completed = response['data']
+pprint(completed)
 
-example_assignment = completed[1]
-email = example_assignment["email"]
-print(email)
-score_answer = [(q["score"], q["answer"]) for q in example_assignment["questions"]]
+email_to_response = {}
+for student in completed:
+    email = student["email"]
+    if "questions" not in student:
+        response = "<p>No submission</p>"
+    else:
+        answers = [q["answer"] for q in student["questions"]]
+        if len(answers) < 7:
+            response = "<p>No Limerick</p>"
+        else:
+            response = answers[6]
+    email_to_response[email] = response
 
-example_code = score_answer[0][1]
-print(example_code)
+output = ["<h1>limericks</h1>"]
+for email, response in email_to_response.items():
+    output.append("<h2>{}</h2>".format(email))
+    output.append(response)
+
+with open(output_filename, 'w') as output_fp:
+    output_fp.writelines(output)
