@@ -148,13 +148,19 @@ def main():
 def delete_main():
     print("Deleting")
     org = get_org(ORGANIZATION_NAME)
-    delete_repos_and_teams(
-        org, except_list={"cse480_website", "instructor-database",
-                          "instructor-database-2016",
-                          "cse480_instructor_only",
-                          "Instructors"})
     print_repos_and_teams(org)
+    except_list = {"Instructors"}
+    for team in org.iter_teams():
+        if team.name not in except_list:
+            print(team)
+            team.delete()
+    # delete_repos_and_teams(
+    #     org, except_list={"cse480_website", "instructor-database",
+    #                       "instructor-database-2016",
+    #                       "cse480_instructor_only",
+    #                       "Instructors"})
+    # print_repos_and_teams(org)
 
 
 if __name__ == "__main__":
-    main()
+    delete_main()
