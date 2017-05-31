@@ -30,14 +30,15 @@ def unzip_directories(zipfilename):
 
 def submit_to_moss(student_submissions,
                    path_to_file_to_check,
-                   unzipped_folder):
+                   unzipped_folder,
+                   language):
     files = [os.path.join(submission, path_to_file_to_check)
              for submission in student_submissions]
     files_that_exist = [file_ for file_ in files if os.path.exists(file_)]
     if not files_that_exist:
         print("Couldn't find any files at that path: ", path_to_file_to_check)
         exit(1)
-    call_args = ["./moss", "-l", "python"] + files_that_exist
+    call_args = ["./moss", "-l", language] + files_that_exist
     subprocess.call(call_args)
     shutil.rmtree(unzipped_folder)
 
@@ -49,11 +50,13 @@ def main():
     """)
     parser.add_argument('zip_file')
     parser.add_argument('path_to_file_to_check')
+    parser.add_argument('language')
     args = parser.parse_args()
     student_submissions, unzipped_folder = unzip_directories(args.zip_file)
     submit_to_moss(student_submissions,
                    args.path_to_file_to_check,
-                   unzipped_folder)
+                   unzipped_folder,
+                   args.language)
 
 
 if __name__ == "__main__":
